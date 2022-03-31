@@ -22,6 +22,18 @@ def get_humid_and_temp():
 @app.post("/create-temp-and-humid")
 def create_temp_and_humid(request: CreateTempAndHumidRequest):
     cursor = db.get_dict_cursor()
-    cursor.execute("insert into dadn.temp_and_humid (humid,temp,record_time) values (%(humid)s, %(temp)s, %(record_time)s) returning *",
-                   {**request.dict(), "record_time": datetime.now()})
+
+    sql = """
+    insert into dadn.temp_and_humid (humid, temp, record_time)
+    values (%(humid)s, %(temp)s, %(record_time)s)
+    returning *
+    """
+
+    params = {
+        **request.dict(),
+        "record_time": datetime.now()
+    }
+
+    cursor.execute(sql, params)
+
     return cursor.fetchone()
