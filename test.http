@@ -1,0 +1,10 @@
+post http://localhost:8000/create-temp-and-humid
+Content-Type: application/json
+
+{
+    "temp": 12,
+    "humid": 13
+}
+
+###
+get http://localhost:8000/list-temp-and-humid

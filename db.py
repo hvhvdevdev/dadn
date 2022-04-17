@@ -6,20 +6,56 @@ from os import getenv
 
 dotenv.load_dotenv()
 
-db_pool = ThreadedConnectionPool(1, 5,
-                                 user=getenv("DB_USER"),
-                                 host=getenv("DB_HOST"),
-                                 password=getenv("DB_PASSWORD"),
-                                 database=getenv("DB_NAME"),)
 
-if (db_pool):
-    print("Connected to database.")
-else:
-    print("Failed to connect to database.")
-    raise Exception()
+class DbPoolFactory:
+    def create_threaded_pool():
+        return ThreadedConnectionPool(1, 5,
+                                      user=getenv("DB_USER"),
+                                      host=getenv("DB_HOST"),
+                                      password=getenv("DB_PASSWORD"),
+                                      database=getenv("DB_NAME"),)
+
+    def create_simple_pool():
+        return ThreadedConnectionPool(1, 5,
+                                      user=getenv("DB_USER"),
+                                      host=getenv("DB_HOST"),
+                                      password=getenv("DB_PASSWORD"),
+                                      database=getenv("DB_NAME"),)
 
 
-def get_dict_cursor() -> RealDictCursor:
-    connection = db_pool.getconn()
-    connection.autocommit = True
-    return connection.cursor(cursor_factory=RealDictCursor)
+class DatabaseConnection:
+    instance = None
+
+    def __init__(self, db_pool: ThreadedConnectionPool) -> None:
+        self.db_pool = db_pool
+
+    def get_instance():
+        if DatabaseConnection.instance != None:
+            return DatabaseConnection.instance
+        else:
+            db_pool = DbPoolFactory.create_threaded_pool()
+
+        if (db_pool):
+            print("Connected to database.")
+        else:
+            print("Failed to connect to database.")
+            raise Exception()
+
+        return DatabaseConnection(db_pool)
+
+    def get_dict_cursor(self) -> RealDictCursor:
+        connection = self.db_pool.getconn()
+        connection.autocommit = True
+        return connection.cursor(cursor_factory=RealDictCursor)
+
+    def execute_query(self, query: str, params: any) -> any:
+        connection = self.db_pool.getconn()
+        connection.autocommit = True
+
+        cursor = connection.cursor(cursor_factory=RealDictCursor)
+        cursor.execute(query, params)
+        result = cursor.fetchall()
+
+        self.db_pool.putconn(connection)
+
+        return result

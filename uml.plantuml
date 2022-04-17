@@ -1,0 +1,84 @@
+@startuml
+!theme vibrant
+
+interface DatabaseConnection {
+        + get_instance()
+        + execute_query(sql)
+}
+note right: Singleton Design Pattern
+
+class DatabaseConnectionAdapter {
+    + get_instance()
+    + execute_query(sql)
+    - db_pool: ConnectionPool
+    - instance: DatabaseConnection
+}
+note right: Adapter Design Pattern
+DatabaseConnectionAdapter -up-|> DatabaseConnection
+
+interface BaseModel
+
+class CreateTempAndHumidRequest {
+    + temp: int
+    + humid: int
+}
+CreateTempAndHumidRequest -down-|> BaseModel
+
+class MainController {
+    + create_temp_and_humid()
+    + get_humid_and_temp()
+}
+MainController --> MainService
+MainController -left-> CreateTempAndHumidRequest
+
+abstract class MainService {
+    + create_temp_and_humid()
+    + get_humid_and_temp()
+}
+
+class DatabaseFacade {
+    + create_temp_and_humid()
+    + get_humid_and_temp()
+}
+note right: Facade Design Pattern
+
+MainServiceImpl -up-|> MainService 
+FakeMainServiceImpl -up-|> MainService
+MainServiceImpl --> DatabaseFacade
+DatabaseFacade --> DatabaseConnection
+
+class DbPoolFactory {
+    + create_threaded_pool(conf)
+    + create_simple_pool(conf)
+}
+note bottom: Factory Method Design Pattern
+DatabaseConnectionAdapter -LEFT-> DbPoolFactory
+
+DbPoolFactory -up-> ThreadedConnectionPool
+DbPoolFactory -up-> SimpleConnectionPool
+
+class DbConfig {
+    + host 
+    + user 
+    + password 
+    + name
+}
+
+DbPoolFactory --> DbConfig
+DatabaseConnectionAdapter --> DbConfig
+DatabaseConnectionAdapter --> DbConfigBuilder
+DbConfigBuilder -left-> DbConfig
+
+class DbConfigBuilder {
+    + host()
+    + user()
+    + password()
+    + name()
+    - host 
+    - user 
+    - password 
+    - name
+}
+note right: Builder Design Pattern
+
+@enduml
