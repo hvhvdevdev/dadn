@@ -70,14 +70,7 @@ DatabaseConnectionAdapter --> DbConfigBuilder
 DbConfigBuilder -left-> DbConfig
 
 class DbConfigBuilder {
-    + host()
-    + user()
-    + password()
-    + name()
-    - host 
-    - user 
-    - password 
-    - name
+    + from_env()
 }
 note right: Builder Design Pattern
 
