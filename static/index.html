@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Adafruit</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdn.anychart.com/releases/8.10.0/js/anychart-base.min.js"></script>
+    <link rel="stylesheet" href="./assets/css/style.css">
+    <link rel="stylesheet" href="./assets/css/responsive.css">
+    <link rel="stylesheet" href="./assets/js/main.js">
+    <link rel="stylesheet" href="./assets/fonts/themify-icons/themify-icons.css">
+</head>
+<body>
+    <!-- <button onclick="test()">Test</button> -->
+    <!-- Control Fan -->
+    <div class="js-modal control-modal">
+        <button id="btn-3" class="js-control-btn control-btn" onclick="btn3()">3</button>
+        <button id="btn-2" class="js-control-btn control-btn" onclick="btn2()">2</button>
+        <button id="btn-1" class="js-control-btn control-btn" onclick="btn1()">1</button>
+        <button id="btn-0" class="js-control-btn control-btn" onclick="btn0()">0</button>
+    </div>
+    <!-- Show temperature and humidity -->
+    <h1 class="heading">Thông tin</h1>
+    <div class="section group information">
+        <div class="col span_1_of_2">
+            <div class="temperature-box">
+                <h1>Nhiệt độ</h1>
+                <h3><span id="temperature">0</span>&#8451;</h3>
+            </div>
+            <div id="temperature-chart"></div>
+        </div>
+        <div class="col span_1_of_2">
+            <div class="humidity-box">
+                <h1>Độ ẩm</h1>
+                <h3><span id="humidity">0</span>%</h3>
+            </div>
+            <div id="humidity-chart"></div>
+        </div>
+    </div>
+    <!-- Setting -->
+    <h1 class="heading">Thiết lập</h1>
+    <div class="setting">
+        <input type="radio" name="control-mode" onclick="setAutomaticMode(1)">
+        <label>Tự động</label>
+        <input type="radio" name="control-mode" onclick="setAutomaticMode(0)">
+        <label>Tùy chỉnh</label>
+        <div class="js-temp-setting setting-temperature">
+            <div class="setting-element">
+                <label>Ngưỡng bật nút 1: <span id="setting-val-1">0</span></label>
+                <button class="setting-btn" onclick="adjustSetting(1)">Chỉnh</button>
+                <input id="setting-input-1" class="setting-input" type="text" onblur="setTemp1(this.value)"><br>
+            </div>
+            <div class="setting-element">
+                <label>Ngưỡng bật nút 2: <span id="setting-val-2">0</span></label>
+                <button class="setting-btn" onclick="adjustSetting(2)">Chỉnh</button>
+                <input id="setting-input-2" class="setting-input" type="text" onblur="setTemp2(this.value)"><br>
+            </div>
+            <div class="setting-element">
+                <label>Ngưỡng bật nút 3: <span id="setting-val-3">0</span></label>
+                <button class="setting-btn" onclick="adjustSetting(3)">Chỉnh</button>
+                <input id="setting-input-3" class="setting-input" type="text" onblur="setTemp3(this.value)"><br>
+            </div>
+        </div>
+    </div>
+    <!-- Statistics -->
+    <h1 class="heading">Thống kê</h1>
+    <table>
+        <thead>
+            <th></th>
+            <th><h5 id="heading-7-day-ago"></h5></th>
+            <th><h5 id="heading-6-day-ago"></h5></th>
+            <th><h5 id="heading-5-day-ago"></h5></th>
+            <th><h5 id="heading-4-day-ago"></h5></th>
+            <th><h5 id="heading-3-day-ago"></h5></th>
+            <th><h5 id="heading-2-day-ago"></h5></th>
+            <th><h5 id="heading-1-day-ago"></h5></th>
+        </thead>
+        <tbody>
+            <tr>
+                <td><p>Nhiệt độ</p></td>
+                <td><p id="temp-7-day-ago"></p></td>
+                <td><p id="temp-6-day-ago"></p></td>
+                <td><p id="temp-5-day-ago"></p></td>
+                <td><p id="temp-4-day-ago"></p></td>
+                <td><p id="temp-3-day-ago"></p></td>
+                <td><p id="temp-2-day-ago"></p></td>
+                <td><p id="temp-1-day-ago"></p></td>
+            </tr>
+            <tr>
+                <td><p>Độ ẩm</p></td>
+                <td><p id="humid-7-day-ago"></p></td>
+                <td><p id="humid-6-day-ago"></p></td>
+                <td><p id="humid-5-day-ago"></p></td>
+                <td><p id="humid-4-day-ago"></p></td>
+                <td><p id="humid-3-day-ago"></p></td>
+                <td><p id="humid-2-day-ago"></p></td>
+                <td><p id="humid-1-day-ago"></p></td>
+            </tr>
+        </tbody>
+    </table>
+
+
+
+    <!-- Javascript -->
+    <script type="text/javascript">
+        let buttonState = 0;
+        let autoState = -1;
+        // Link control-fan button to adafruit
+        function btnToggle1(value) {
+            $.ajax({
+                url: 'https://io.adafruit.com/api/v2/khanhad69/feeds/iot-dadn.fan-status-1/data',
+                dataType: 'json',
+                type: 'post',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Host': 'io.adafruit.com',
+                    'Content-Length': '24',
+                    'Content-Type': 'application/json',
+                    'X-AIO-Key': 'aio_NmDN7114NKG08q56uoHiKtBNLwWy'
+                },
+                data: JSON.stringify({"value": value}),
+                processData: false,
+                success: function (data, textStatus, jQxhr) {
+                    // console.log(`Button 1 (${value}): OK`);
+                },
+                error: function (jQxhr, textStatus, errorThrown) {
+                    // console.error(errorThrown);
+                }
+            });
+        }
+        function btnToggle2(value) {
+            $.ajax({
+                url: 'https://io.adafruit.com/api/v2/khanhad69/feeds/iot-dadn.fan-status-2/data',
+                dataType: 'json',
+                type: 'post',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Host': 'io.adafruit.com',
+                    'Content-Length': '24',
+                    'Content-Type': 'application/json',
+                    'X-AIO-Key': 'aio_NmDN7114NKG08q56uoHiKtBNLwWy'
+                },
+                data: JSON.stringify({"value": value}),
+                processData: false,
+                success: function (data, textStatus, jQxhr) {
+                    // console.log(`Button 2 (${value}): OK`);
+                },
+                error: function (jQxhr, textStatus, errorThrown) {
+                    // console.error(errorThrown);
+                }
+            });
+        }
+        function btnToggle3(value) {
+            $.ajax({
+                url: 'https://io.adafruit.com/api/v2/khanhad69/feeds/iot-dadn.fan-status-3/data',
+                dataType: 'json',
+                type: 'post',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Host': 'io.adafruit.com',
+                    'Content-Length': '24',
+                    'Content-Type': 'application/json',
+                    'X-AIO-Key': 'aio_NmDN7114NKG08q56uoHiKtBNLwWy'
+                },
+                data: JSON.stringify({"value": value}),
+                processData: false,
+                success: function (data, textStatus, jQxhr) {
+                    // console.log(`Button 3 (${value}): OK`);
+                },
+                error: function (jQxhr, textStatus, errorThrown) {
+                    // console.error(errorThrown);
+                }
+            });
+        }
+        // Control button
+        function changeStateBtn(value) {
+            for (let i = 0; i < 4; i++) {
+                let btn = document.getElementById("btn-" + i.toString());
+                if (i == value) {
+                    if (!btn.classList.contains("on")) {
+                        btn.classList.add("on");
+                    }
+                }
+                else {
+                    if (btn.classList.contains("on")) {
+                        btn.classList.remove("on");
+                    }
+                }
+            }
+        }
+        function btn0() {
+            if (buttonState != 0) {
+                btnToggle1('0');
+                btnToggle2('0');
+                btnToggle3('0');
+                buttonState = 0;
+                changeStateBtn(0);
+                console.log("All Button: OFF");
+            }
+        }
+        function btn1() {
+            if (buttonState != 1) {
+                btnToggle2('0');
+                btnToggle3('0');
+                btnToggle1('1');
+                buttonState = 1;
+                changeStateBtn(1);
+                console.log("Button 1: ON");
+            }
+        }
+        function btn2() {
+            if (buttonState != 2) {
+                btnToggle1('0');
+                btnToggle3('0');
+                btnToggle2('1');
+                buttonState = 2;
+                changeStateBtn(2);
+                console.log("Button 2: ON");
+            }
+        }
+        function btn3() {
+            if (buttonState != 3) {
+                btnToggle1('0');
+                btnToggle2('0');
+                btnToggle3('1');
+                buttonState = 3;
+                changeStateBtn(3);
+                console.log("Button 3: ON");
+            }
+        }
+        // Automatic control
+        // Setting value
+        let temp1 = 25;
+        let temp2 = 30;
+        let temp3 = 35;
+        document.getElementById("setting-val-1").innerHTML = temp1.toString();
+        document.getElementById("setting-val-2").innerHTML = temp2.toString();
+        document.getElementById("setting-val-3").innerHTML = temp3.toString();
+        function setTemp1(value) {
+            let temp = parseInt(value)
+            if (temp < temp2) {
+                temp1 = temp;
+            }
+            else {
+                alert("Ngưỡng bật nút 1 phải nhỏ hơn ngưỡng bật nút 2");
+            }
+            document.getElementById("setting-input-1").classList.remove("open");
+            document.getElementById("setting-val-1").innerHTML = temp1.toString();
+            autoControlFan();
+            console.log("Temp1: SET");
+        }
+        function setTemp2(value) {
+            let temp = parseInt(value)
+            if (temp > temp1 && temp < temp3) {
+                temp2 = temp;
+            }
+            else {
+                alert("Ngưỡng bật nút 2 phải nhỏ hơn ngưỡng bật nút 3 và lớn hơn ngưỡng bật nút 1");
+            }
+            document.getElementById("setting-input-2").classList.remove("open");
+            document.getElementById("setting-val-2").innerHTML = temp2.toString();
+            autoControlFan();
+            console.log("Temp2: SET");
+        }
+        function setTemp3(value) {
+            let temp = parseInt(value)
+            if (temp > temp2) {
+                temp3 = temp;
+            }
+            else {
+                alert("Ngưỡng bật nút 3 phải lớn hơn ngưỡng bật nút 2");
+            }
+            document.getElementById("setting-input-3").classList.remove("open");
+            document.getElementById("setting-val-3").innerHTML = temp3.toString();
+            autoControlFan();
+            console.log("Temp3: SET");
+        }
+        function getTemp1() {
+            return temp1.toString()
+        }
+        function getTemp2() {
+            return temp2.toString()
+        }
+        function getTemp3() {
+            return temp3.toString()
+        }
+        function adjustSetting(value) {
+            console.log(value);
+            let input = document.getElementById("setting-input-" + value.toString());
+            if (!input.classList.contains("open")) {
+                input.classList.add("open")
+            }
+        }
+        // set automatic mode
+        const modal = document.querySelector('.js-modal')
+        const tempSetting = document.querySelector(".js-temp-setting");
+        const controlBtn = document.querySelectorAll('.js-control-btn');
+        controlBtn[0].addEventListener('click', btn0());
+        controlBtn[1].addEventListener('click', btn1());
+        controlBtn[2].addEventListener('click', btn2());
+        controlBtn[3].addEventListener('click', btn3());
+        function setAutomaticMode(mode) {
+            if (autoState == -1) {
+                autoState = mode;
+                if (mode == 0) {
+                    modal.classList.add("open");
+                }
+                else {
+                    tempSetting.classList.add("open");
+                    autoControlFan();
+                }
+            }
+            else if (autoState == 0) {
+                if (mode == 1) {
+                    autoState = 1;
+                    modal.classList.remove("open");
+                    tempSetting.classList.add("open");
+                    autoControlFan();
+                }
+            }
+            else {
+                if (mode == 0) {
+                    autoState = 0;
+                    modal.classList.add("open");
+                    tempSetting.classList.remove("open");
+                }
+            }
+        }
+        // temperature data
+        function intToString(value) {
+            if (value < 10) {
+                return "0" + value.toString();
+            }
+            return value.toString();
+        }
+        function getYesterday() {
+            let time = new Date();
+            let year = intToString(time.getFullYear());
+            let month = intToString(time.getMonth() + 1);
+            let date = intToString(time.getDate() - 1);
+            let hour = intToString(time.getHours());
+            let min = intToString(time.getMinutes());
+            let sec = intToString(time.getSeconds());
+            return year + "-" + month + "-" + date + "T" + hour + ":" + min + ":" + sec + "Z";
+        }
+        function getNow() {
+            let time = new Date();
+            let year = intToString(time.getFullYear());
+            let month = intToString(time.getMonth() + 1);
+            let date = intToString(time.getDate());
+            let hour = intToString(time.getHours());
+            let min = intToString(time.getMinutes());
+            let sec = intToString(time.getSeconds());
+            return year + "-" + month + "-" + date + "T" + hour + ":" + min + ":" + sec + "Z";
+        }
+        function changeToGMT7(timeString) {
+            let year = parseInt(timeString.slice(0, 4));
+            let month = parseInt(timeString.slice(5, 7)) - 1;
+            let date = parseInt(timeString.slice(8, 10));
+            let hour = parseInt(timeString.slice(11, 13));
+            let min = parseInt(timeString.slice(14, 16));
+            let sec = parseInt(timeString.slice(17, 19));
+            let time = new Date(year, month, date, hour + 7, min, sec);
+            year = intToString(time.getFullYear());
+            month = intToString(time.getMonth() + 1);
+            date = intToString(time.getDate());
+            hour = intToString(time.getHours());
+            min = intToString(time.getMinutes());
+            sec = intToString(time.getSeconds());
+            return year + "-" + month + "-" + date + "T" + hour + ":" + min + ":" + sec + "Z";
+        }
+        let temperatureList = {
+            value: []
+        };
+        let temperatureSet = {
+            value: NaN
+        };
+        function getTemperatureList() {
+            $.getJSON("https://io.adafruit.com/api/v2/khanhad69/feeds/iot-dadn.house-temp/data", function(data) {
+                let yesterday = getYesterday();
+                for (let obj of data) {
+                    let created_at = changeToGMT7(obj.created_at);
+                    temperatureList.value.push([created_at, obj.value]);
+                    if (created_at < yesterday) {
+                        break;
+                    }
+                }
+                temperatureList.value.reverse();
+                temperatureSet.value = anychart.data.set(temperatureList.value);
+                let tempSeriesData = temperatureSet.value.mapAs({ x: 0, value: 1 });
+                let tempChart = anychart.line();
+                let tempLineChart = tempChart.line(tempSeriesData);
+                tempChart.container('temperature-chart');
+                tempChart.draw();
+            })
+        }
+        getTemperatureList();
+        function updateTemperatureData(date, val) {
+            // update oldest element
+            if (temperatureList.value.length > 1) {
+                if (temperatureList.value[1][0] <= getYesterday()) {
+                    temperatureList.value.shift();
+                    temperatureSet.value.remove(0);
+                }
+            }
+            // update newest element
+            if (!isNaN(val)) {
+                temperatureList.value.push([date, val]);
+                temperatureSet.value.append([date, val]);
+            }
+        }
+        // humid data
+        let humidityList = {
+            value: []
+        };
+        let humiditySet = {
+            value: NaN
+        };
+        function getHumidityList() {
+            $.getJSON("https://io.adafruit.com/api/v2/khanhad69/feeds/iot-dadn.house-humid/data", function(data) {
+                let yesterday = getYesterday();
+                for (let obj of data) {
+                    let created_at = changeToGMT7(obj.created_at);
+                    humidityList.value.push([created_at, obj.value]);
+                    if (created_at < yesterday) {
+                        break;
+                    }
+                }
+                humidityList.value.reverse();
+                humiditySet.value = anychart.data.set(humidityList.value);
+                let tempSeriesData = humiditySet.value.mapAs({ x: 0, value: 1 });
+                let tempChart = anychart.line();
+                let tempLineChart = tempChart.line(tempSeriesData);
+                tempChart.container('humidity-chart');
+                tempChart.draw();
+            })
+        }
+        getHumidityList();
+        function updateHumidityData(date, val) {
+            // update oldest element
+            if (humidityList.value.length > 1) {
+                if (humidityList.value[1][0] <= getYesterday()) {
+                    humidityList.value.shift();
+                    humiditySet.value.remove(0);
+                }
+            }
+            // update newest element
+            if (!isNaN(val)) {
+                humidityList.value.push([date, val]);
+                humiditySet.value.append([date, val]);
+            }
+        }
+        // get temperature
+        let update_circle = 29000;
+        let lastTemperature = {
+            value: "",
+            updated_at: ""
+        }
+        btn0();
+        function autoControlFan() {
+            if (autoState == 1) {
+                if (parseInt(lastTemperature.value) >= temp3) {
+                    if (buttonState != 3) {
+                        btn3();
+                        buttonState = 3;
+                    }
+                }
+                else if (parseInt(lastTemperature.value) >= temp2) {
+                    if (buttonState != 2) {
+                        btn2();
+                        buttonState = 2;
+                    }
+                }
+                else if (parseInt(lastTemperature.value) >= temp1) {
+                    if (buttonState != 1) {
+                        btn1();
+                        buttonState = 1;
+                    }
+                }
+                else {
+                    if (buttonState != 0) {
+                        btn0();
+                        buttonState = 0;
+                    }
+                }
+            }
+        }
+        function getTemperature(mode = true) {
+            $.getJSON("https://io.adafruit.com/api/v2/khanhad69/feeds/iot-dadn.house-temp", function(data) {
+                if (data.updated_at == lastTemperature.updated_at) {
+                    if (mode) {
+                        updateTemperatureData(NaN, NaN);
+                    }
+                }
+                else {
+                    lastTemperature.value = data.last_value;
+                    document.getElementById("temperature").innerHTML = lastTemperature.value;
+                    lastTemperature.updated_at = data.updated_at;
+                    if (mode) {
+                        updateTemperatureData(data.updated_at, data.last_value);
+                    }
+                }
+                autoControlFan();
+            })
+        }
+        getTemperature(false);
+        setInterval(getTemperature, update_circle);
+        // get humidity
+        let lastHumidity = {
+            value: "",
+            updated_at: ""
+        }
+        function getHumidity(mode = true) {
+            $.getJSON("https://io.adafruit.com/api/v2/khanhad69/feeds/iot-dadn.house-humid", function(data) {
+                if (data.updated_at == lastHumidity.updated_at) {
+                    if (mode) {
+                        updateHumidityData(NaN, NaN);
+                    }
+                }
+                else {
+                    lastHumidity.value = data.last_value;
+                    document.getElementById("humidity").innerHTML = data.last_value;
+                    lastHumidity.updated_at = data.updated_at;
+                    if (mode) {
+                        updateHumidityData(data.updated_at, data.last_value);
+                    }
+                }
+            })
+        }
+        getHumidity(false);
+        setInterval(getHumidity, update_circle);
+        // calculate statistics
+        function getDayAgo(n, nEle) {
+            let time = new Date();
+            let year = intToString(time.getFullYear());
+            let month = intToString(time.getMonth() + 1);
+            let date = intToString(time.getDate() - n);
+            if (nEle == 2) {
+                return date + "/" + month;
+            }
+            return year + "-" + month + "-" + date + "T23:59:59Z";
+        }
+        function calAverage(lst) {
+            // type 0 is temperature, type 1 is humidity
+            if (lst.length == 0) {
+                return "-";
+            }
+            let ans = 0;
+            for (x of lst) {
+                ans += x;
+            }
+            return (ans / lst.length).toFixed(1).toString();
+        }
+        function calData() {
+            let size = 7;
+            for (let i = 0; i < size; i++) {
+                document.getElementById("heading-" + (i + 1).toString() + "-day-ago").innerHTML = getDayAgo(i + 1, 2);
+            }
+            $.getJSON("https://io.adafruit.com/api/v2/khanhad69/feeds/iot-dadn.house-temp/data", function(data) {
+                let ago = [];
+                let size = 7;
+                for (let i = 0; i < size; i++) {
+                    ago.push(getDayAgo(i + 1, 6));
+                }
+                ago.push(getDayAgo(size + 1, 6));
+                let iter = 0;
+                let averageData = [];
+                let dataIndex = 0;
+                while (dataIndex < data.length || iter < size + 1) {
+                    if (dataIndex >= data.length) {
+                        if (iter > 0) {
+                            document.getElementById("temp-" + iter.toString() + "-day-ago").innerHTML = calAverage(averageData);
+                            averageData = [];
+                        }
+                        iter++;
+                    }
+                    else {
+                        let created_at = changeToGMT7(data[dataIndex].created_at);
+                        if (created_at <= ago[iter]) {
+                            if (iter > 0) {
+                                document.getElementById("temp-" + iter.toString() + "-day-ago").innerHTML = calAverage(averageData);
+                                averageData = [];
+                            }
+                            iter++;
+                        }
+                        else {
+                            if (iter > 0) {
+                                averageData.push(parseFloat(data[dataIndex].value))
+                            }
+                            dataIndex++;
+                        }
+                    }
+                }
+            })
+            $.getJSON("https://io.adafruit.com/api/v2/khanhad69/feeds/iot-dadn.house-humid/data", function(data) {
+                let ago = [];
+                let size = 7;
+                for (let i = 0; i < size; i++) {
+                    ago.push(getDayAgo(i + 1, 6));
+                }
+                ago.push(getDayAgo(size + 1, 6));
+                let iter = 0;
+                let averageData = [];
+                let dataIndex = 0;
+                while (dataIndex < data.length || iter < size + 1) {
+                    if (dataIndex >= data.length) {
+                        if (iter > 0) {
+                            document.getElementById("humid-" + iter.toString() + "-day-ago").innerHTML = calAverage(averageData);
+                            averageData = [];
+                        }
+                        iter++;
+                    }
+                    else {
+                        let created_at = changeToGMT7(data[dataIndex].created_at);
+                        if (created_at <= ago[iter]) {
+                            if (iter > 0) {
+                                document.getElementById("humid-" + iter.toString() + "-day-ago").innerHTML = calAverage(averageData);
+                                averageData = [];
+                            }
+                            iter++;
+                        }
+                        else {
+                            if (iter > 0) {
+                                averageData.push(parseFloat(data[dataIndex].value))
+                            }
+                            dataIndex++;
+                        }
+                    }
+                }
+            })
+        }
+        calData();
+    </script>
+</body>
+</html>

@@ -1,0 +1,127 @@
+*{
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+}
+
+html{
+    font-family: Helvetica, Arial, sans-serif;
+    scroll-behavior: smooth;
+}
+
+table {
+    margin-top: 10px;
+    margin-left: 30px;
+}
+
+table, th, td{
+    border: 1px solid;
+    padding: 5px;
+}
+
+td{
+    text-align: center;
+}
+
+.section {
+	clear: both;
+	padding: 0px;
+	margin: 0px;
+}
+
+/*  COLUMN SETUP  */
+.col {
+	display: block;
+	float:left;
+	margin: 1% 0 1% 1.6%;
+}
+.col:first-child { margin-left: 0; }
+
+/*  GROUPING  */
+.group:before,
+.group:after { content:""; display:table; }
+.group:after { clear:both;}
+.group { zoom:1; /* For IE 6/7 */ }
+/*  GRID OF TWO  */
+.span_2_of_2 {
+	width: 100%;
+}
+.span_1_of_2 {
+	width: 49.2%;
+}
+
+.control-btn{
+    width: 50px;
+    height: 50px;
+    border-radius: 30px;
+    background-color: white;
+    margin-top: 20px;
+}
+
+.control-icon{
+    font-size: 14px;
+    line-height: 46px;
+    font-size: 20px;
+}
+
+.control-modal{
+    position: fixed;
+    bottom: 50px;
+    right: 30px;
+    width: 50px;
+    height: 300px;
+    display: none;
+    z-index: 1;
+    opacity: 0.3;
+}
+
+.control-modal:hover {
+    opacity: 1;
+}
+
+.on {
+    background-color: turquoise;
+}
+
+.temperature-box, .humidity-box{
+    width: 90%;
+    padding: 50px;
+    margin: 5%;
+}
+
+.temperature-box{
+    background-color: orange;
+}
+
+.humidity-box{
+    background-color: turquoise;
+}
+
+.heading, .setting{
+    margin-top: 10px;
+    margin-left: 30px;
+}
+
+.setting-element{
+    margin-top: 20px;
+}
+
+.setting-btn{
+    display: inline;
+}
+
+.setting-temperature{
+    display: none;
+}
+
+.setting-input{
+    display: none;
+}
+
+.open{
+    display: block;
+}
+
+.setting-input.open {
+    display: inline;
+}
