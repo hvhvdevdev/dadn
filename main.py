@@ -15,6 +15,15 @@ class CreateTempAndHumidRequest(BaseModel):
     humid: int
 
 
+class SetFanRequest(BaseModel):
+    fans: list[int]
+
+
+class GetFanResponse(BaseModel):
+    fans: list[int]
+    timestamp: datetime
+
+
 @app.get("/list-temp-and-humid")
 def get_humid_and_temp():
     return MainServiceImpl.get_humid_and_temp()
@@ -25,11 +34,30 @@ def create_temp_and_humid(request: CreateTempAndHumidRequest):
     return MainServiceImpl.create_temp_and_humid(request)
 
 
+fans = [0, 0, 0]
+
+
+@app.post("/set-fans")
+def set_fans(request: SetFanRequest):
+    return MainServiceImpl.set_fans(request)
+
+
+@app.get("/get-fans")
+def get_fans():
+    return MainServiceImpl.get_fans()
+
+
 class FakeMainService():
     def create_temp_and_humid():
         return
 
     def get_humid_and_temp():
+        return
+
+    def set_fans():
+        return
+
+    def get_fans():
         return
 
 
@@ -39,6 +67,15 @@ class MainServiceImpl():
 
     def get_humid_and_temp():
         return DatabaseFacade.get_humid_and_temp()
+
+    def set_fans(request: SetFanRequest):
+        global fans
+        fans = request.fans
+        return fans
+
+    def get_fans():
+        global fans
+        return GetFanResponse(fans=fans, timestamp=datetime.now())
 
 
 class DatabaseFacade():
